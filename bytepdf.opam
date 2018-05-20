@@ -1,0 +1,22 @@
+opam-version: "1.2"
+version: "dev"
+maintainer: "Drup <drupyog@zoho.com>"
+authors: "Drup <drupyog@zoho.com>"
+license: "ISC"
+homepage: "https://github.com/Drup/bytepdf"
+bug-reports: "https://github.com/Drup/bytepdf/issues"
+dev-repo: "git+https://github.com/Drup/bytepdf.git"
+
+depends: [
+  "jbuilder" {build}
+  "obytelib"
+  "camlpdf"
+]
+available: ocaml-version >= "4.03"
+build: [
+  ["jbuilder" "subst" "-n" name] {pinned}
+  ["jbuilder" "build" "-p" name "-j" jobs "@install"]
+]
+build-test: [
+  ["jbuilder" "runtest" "-p" name]
+]

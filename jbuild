@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(executable
+ ((name        bytepdf)
+  (public_name bytepdf)
+  (modules    (Bytepdf))
+  (libraries  (obytelib camlpdf))))
+

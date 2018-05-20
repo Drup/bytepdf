@@ -1,0 +1,8 @@
+_build/
+.merlin
+*.install
+*.bc.js
+.gh-pages
+data/*.csv
+data/*.svg
+data/*.png
