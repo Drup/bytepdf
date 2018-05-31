@@ -4,5 +4,5 @@
  ((name        bytepdf)
   (public_name bytepdf)
   (modules    (Bytepdf))
-  (libraries  (obytelib camlpdf cmdliner))))
+  (libraries  (obytelib camlpdf cmdliner containers bos))))
 

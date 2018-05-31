@@ -1,3 +1,4 @@
+open Rresult
 
 module BC = struct
   open OByteLib
@@ -15,6 +16,22 @@ module BC = struct
         name : string ;
         data : string ;
       }
+
+  let from_bytefile
+      {Bytefile.
+        version; vmpath = _; vmarg = _; index = _;
+        extra; data; prim; code; dlpt; dlls; 
+        crcs; dbug; symb } =
+    let l = [
+      CODE code;
+      DLPT dlpt; DLLS dlls; 
+      PRIM prim; DATA data;
+      SYMB symb;
+      CRCS crcs; DBUG dbug; 
+    ]
+    in
+    version, extra, l
+    
 
   let write_secdata_raw v oc section : Section.t = match section with
     | CODE x -> Code.write v oc x ; CODE
@@ -34,36 +51,43 @@ module BC = struct
     Index.({ section; offset; length })
 
   let write_secdatas v oc secdatas =
-    List.fold_left
-      (fun indices x -> let i = write_secdata v oc x in i :: indices)
-      []
-      secdatas
+    let rec aux = function
+      | [] -> []
+      | sec :: l ->
+        let i = write_secdata v oc sec in
+        i :: aux l
+    in
+    aux secdatas
 
-  let writeshebang oc s = Printf.fprintf oc "#! %s" s
-  
-  let write ~filename ~version ?shebang ?(extra=Extra.empty) secdatas = 
+  let writeshebang oc s = Printf.fprintf oc "#!%s\n" s
+
+  let write_oc ~oc ~version ?shebang ?(extra=Extra.empty) secdatas = 
+    begin match shebang with
+      | Some s -> writeshebang oc s
+      | None -> ()
+    end;
+    Extra.write oc extra;
+    let indices = write_secdatas version oc secdatas in
+    Index.write oc indices ;
+    Version.write oc version ;
+    flush oc
+
+  let write ~filename ~version ?shebang ?(extra=Extra.empty) secdatas =
     let oflags = [ Open_wronly; Open_creat; Open_trunc; Open_binary ] in
     let oc =
       try open_out_gen oflags 0o751 filename
       with _ -> failwith @@ Printf.sprintf "fail to open file %S for writting" filename
     in
     try
-      begin match shebang with
-        | Some s -> writeshebang oc s
-        | None -> ()
-      end;
-      Extra.write oc extra;
-      let indices = write_secdatas version oc secdatas in
-      Index.write oc indices ;
-      Version.write oc version ;
+      write_oc ~oc ~version ?shebang ~extra secdatas ;
       close_out oc ;
-  with
-  | Failure msg ->
-    close_out oc;
-    failwith @@ Printf.sprintf  "fail to write bytecode file %S (%s)" filename msg
-  | exn ->
-    close_out oc;
-    failwith @@ Printf.sprintf  "fail to write bytecode file %S (internal error: %s)" filename (Printexc.to_string exn)
+    with
+    | Failure msg ->
+      close_out oc;
+      failwith @@ Printf.sprintf  "fail to write bytecode file %S (%s)" filename msg
+    | exn ->
+      close_out oc;
+      failwith @@ Printf.sprintf  "fail to write bytecode file %S (internal error: %s)" filename (Printexc.to_string exn)
 
 end
 
@@ -173,10 +197,26 @@ module IO = struct
 end
 
 let smash filepdf filebc fileout =
-  let stringbc = IO.(with_in ~flags:[Open_binary] filebc @@ read_all) in
-  (* let bc = OByteLib.Bytefile.read filebc in *)
+  let version, extra, bc =
+    BC.from_bytefile @@ OByteLib.Bytefile.read filebc
+  in
+  let shebang = "/home/gabriel/.opam/tools/bin/ocamlrun" in
+
+  BC.write ~filename:"bdebug.bc" ~shebang ~extra ~version bc ;
+  
+  let bc_string =
+    R.get_ok @@
+    Bos.OS.File.with_tmp_oc "bytepdf%s"
+      (fun f oc bc ->
+         BC.write_oc ~oc ~shebang ~extra ~version bc;
+         R.get_ok @@ Bos.OS.File.read f
+      )
+      bc
+  in
+  (* let original_bc_len = String.length bc_string in *)
+  
   let pdf = Pdfread.pdf_of_file None None filepdf in
-  let pdf = PdfAnnot.attach ~pdf ~filename:filebc ~content:stringbc in
+  let pdf = PdfAnnot.attach ~pdf ~filename:filebc ~content:bc_string in
   
   let pdf_string =
     let oc, br = Pdfio.input_output_of_bytes 16 in
@@ -186,23 +226,56 @@ let smash filepdf filebc fileout =
     let b = Pdfio.extract_bytes_from_input_output oc br in
     Pdfio.string_of_bytes b
   in
+  let pdf_len = String.length pdf_string in
 
+  let search_token = "#!" ^ shebang ^ "\n" in
+  let search_len = String.length search_token in
   
-  
-  let oflags = [ Open_wronly; Open_creat; Open_trunc; Open_binary ] in
-  let oc =
-    try open_out_gen oflags 0o751 fileout
-    with _ -> failwith @@ Printf.sprintf "fail to open file %S for writing" fileout
+  let bc_start =
+    let i = CCString.find ~sub:search_token pdf_string in
+    assert (i <> -1) ;
+    search_len + i
   in
-  output_string oc pdf_string;  
+  let bc_end =
+    let sub = OByteLib.Version.to_magic version ^ "\nendstream" in
+    let i = CCString.rfind ~sub pdf_string in
+    assert (i <> -1) ;
+    Format.printf "bc_end: %i@.%s@." i (String.sub pdf_string i 20) ;
+    i - 8 * List.length bc - 4
+  in
+  let offset = pdf_len - bc_end in
+  
+  Format.printf "offset: %i@.%s@." offset
+    (String.sub pdf_string bc_end (4 + 8 * List.length bc))
+  ;
+  
+  let extra = String.sub pdf_string 0 bc_start in
+  let _bc_string2 = String.sub pdf_string bc_start (bc_end - bc_start) in
+  (* assert (CCString.find ~sub:bc_string2 bc_string <> -1) ; *)
+  let xpdf = String.sub pdf_string bc_end (pdf_len - bc_end) in
+  
+  BC.write
+    ~filename:fileout
+    ~version
+    ?shebang:None
+    ~extra
+    (bc @ [BC.Unknown {name="XPDF"; data=xpdf}]);
+  
+  (* ignore (extra, xpdf); *)
+  (* let oflags = [ Open_wronly; Open_creat; Open_trunc; Open_binary ] in
+   * let oc =
+   *   try open_out_gen oflags 0o751 fileout
+   *   with _ -> failwith @@ Printf.sprintf "fail to open file %S for writing" fileout
+   * in
+   * output_string oc pdf_string; *)
+
   ()
   
 let term =
   let open Cmdliner in
-  let section = "FILES" in
   let bytecode =
     let doc =
-      Arg.info ~docs:section ~docv:"BC" ~doc:"The OCaml bytecode file to be included in the resulting polyglot file." ["bytecode";"bc"]
+      Arg.info ~docv:"BC" ~doc:"The OCaml bytecode file to be included in the resulting polyglot file." ["bytecode";"bc"]
     in
     Arg.(required & opt (some non_dir_file) None doc)
   in
