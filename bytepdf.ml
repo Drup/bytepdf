@@ -240,18 +240,18 @@ let smash filepdf filebc fileout =
     let sub = OByteLib.Version.to_magic version ^ "\nendstream" in
     let i = CCString.rfind ~sub pdf_string in
     assert (i <> -1) ;
-    Format.printf "bc_end: %i@.%s@." i (String.sub pdf_string i 20) ;
+    (* Format.printf "bc_end: %i@.%s@." i (String.sub pdf_string i 20) ; *)
     i - 8 * List.length bc - 4
   in
-  let offset = pdf_len - bc_end in
-  
-  Format.printf "offset: %i@.%s@." offset
-    (String.sub pdf_string bc_end (4 + 8 * List.length bc))
-  ;
+
+  (* let offset = pdf_len - bc_end in *)
+  (* Format.printf "offset: %i@.%s@." offset
+   *   (String.sub pdf_string bc_end (4 + 8 * List.length bc))
+   * ; *)
   
   let extra = String.sub pdf_string 0 bc_start in
-  let _bc_string2 = String.sub pdf_string bc_start (bc_end - bc_start) in
-  (* assert (CCString.find ~sub:bc_string2 bc_string <> -1) ; *)
+  let bc_string2 = String.sub pdf_string bc_start (bc_end - bc_start) in
+  assert (CCString.find ~sub:bc_string2 bc_string <> -1) ;
   let xpdf = String.sub pdf_string bc_end (pdf_len - bc_end) in
   
   BC.write
