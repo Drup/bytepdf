@@ -200,9 +200,7 @@ let smash filepdf filebc fileout =
   let version, extra, bc =
     BC.from_bytefile @@ OByteLib.Bytefile.read filebc
   in
-  let shebang = "/home/gabriel/.opam/tools/bin/ocamlrun" in
-
-  BC.write ~filename:"bdebug.bc" ~shebang ~extra ~version bc ;
+  let shebang = "ocamlrun" in
   
   let bc_string =
     R.get_ok @@
