@@ -153,9 +153,9 @@ module PdfAnnot = struct
     let pages = Pdfpage.pages_of_pagetree pdf in
     match pages with
     | [] -> failwith "This PDF has no pages. Impossible to add the annotation."
-    | p :: _pages ->
+    | p :: pages ->
       let newpage = add_annotation pdf p annotobj in
-      let pdf = Pdfpage.change_pages ~changes:[1,1] true pdf [newpage] in
+      let pdf = Pdfpage.change_pages true pdf (newpage :: pages) in
       Pdf.remove_unreferenced pdf;
       pdf
 
@@ -287,7 +287,7 @@ let term =
   in
   let output = 
     let doc =
-      Arg.info ~docv:"PDF" ~doc:"Output file" ["o"]
+      Arg.info ~docv:"FILE" ~doc:"Output file" ["o"]
     in
     Arg.(required & opt (some string) None doc)
   in
