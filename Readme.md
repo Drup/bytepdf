@@ -19,7 +19,7 @@ have been statically linked with C code.
 
 ## Install
 
-You currently requires a modified version of `oByteLib`:
+This currently requires a modified version of `oByteLib`:
 
 ```
 opam pin add oByteLib https://github.com/Drup/obytelib.git
