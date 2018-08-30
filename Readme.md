@@ -19,14 +19,6 @@ have been statically linked with C code.
 
 ## Install
 
-This currently requires a modified version of `oByteLib`:
-
 ```
-opam pin add oByteLib https://github.com/Drup/obytelib.git
-```
-
-Then you can pin this repository
-
-```
-opam pin add bytepdf https://github.com/Drup/bytepdf.git
+opam install bytepdf
 ```
