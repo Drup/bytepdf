@@ -1,15 +1,11 @@
 default: all
 
 all:
-	jbuilder build @install --dev
-
+	dune build
 test:
-	jbuilder runtest
+	dune runtest
 
 clean:
-	jbuilder clean
+	dune clean
 
-doc:
-	jbuilder build @doc
-
-.PHONY: all test clean doc
+.PHONY: all test clean

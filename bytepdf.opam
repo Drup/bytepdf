@@ -8,15 +8,12 @@ bug-reports: "https://github.com/Drup/bytepdf/issues"
 dev-repo: "git+https://github.com/Drup/bytepdf.git"
 
 depends: [
-  "jbuilder" {build}
-  "obytelib"
+  "dune" {build}
+  "obytelib" { >= "1.4" }
   "camlpdf"
 ]
 available: ocaml-version >= "4.03"
 build: [
-  ["jbuilder" "subst" "-n" name] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs "@install"]
-]
-build-test: [
-  ["jbuilder" "runtest" "-p" name]
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
 ]
