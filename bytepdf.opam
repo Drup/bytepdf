@@ -9,6 +9,7 @@ dev-repo: "git+https://github.com/Drup/bytepdf.git"
 
 depends: [
   "dune" {build}
+  "cmdliner"
   "obytelib" { >= "1.4" }
   "camlpdf"
 ]
