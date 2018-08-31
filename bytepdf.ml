@@ -230,16 +230,17 @@ let smash filepdf filebc fileout =
   let search_len = String.length search_token in
   
   let bc_start =
-    let i = CCString.find ~sub:search_token pdf_string in
-    assert (i <> -1) ;
-    search_len + i
+    let i = Astring.String.find_sub ~sub:search_token pdf_string in
+    match i with
+    | None -> assert false
+    | Some i -> search_len + i
   in
   let bc_end =
     let sub = OByteLib.Version.to_magic version ^ "\nendstream" in
-    let i = CCString.rfind ~sub pdf_string in
-    assert (i <> -1) ;
-    (* Format.printf "bc_end: %i@.%s@." i (String.sub pdf_string i 20) ; *)
-    i - 8 * List.length bc - 4
+    let i = Astring.String.find_sub ~rev:true ~sub pdf_string in
+    match i with
+    | None -> assert false
+    | Some i -> i - 8 * List.length bc - 4
   in
 
   (* let offset = pdf_len - bc_end in *)
@@ -249,7 +250,7 @@ let smash filepdf filebc fileout =
   
   let extra = String.sub pdf_string 0 bc_start in
   let bc_string2 = String.sub pdf_string bc_start (bc_end - bc_start) in
-  assert (CCString.find ~sub:bc_string2 bc_string <> -1) ;
+  assert (Astring.String.find_sub ~sub:bc_string2 bc_string <> None) ;
   let xpdf = String.sub pdf_string bc_end (pdf_len - bc_end) in
   
   BC.write
