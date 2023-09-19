@@ -39,7 +39,7 @@ module BC = struct
     | DLLS x -> Dlls.write oc x ; DLLS
     | PRIM x -> Prim.write oc x ; PRIM
     | DATA x -> Data.write oc x ; DATA
-    | SYMB x -> Symb.write oc x ; SYMB
+    | SYMB x -> Symb.write v oc x ; SYMB
     | CRCS x -> Crcs.write oc x ; CRCS
     | DBUG x -> Dbug.write oc x ; DBUG
     | Unknown { data ; name } -> output_string oc data ; Unknown name
@@ -219,8 +219,8 @@ let smash filepdf filebc fileout =
   let pdf_string =
     let oc, br = Pdfio.input_output_of_bytes 16 in
     Pdfwrite.pdf_to_output
-      ~preserve_objstm:false ~generate_objstm:false ~compress_objstm:false false
-      None pdf oc;
+      ~preserve_objstm:false ~generate_objstm:false ~compress_objstm:false
+      None false pdf oc;
     let b = Pdfio.extract_bytes_from_input_output oc br in
     Pdfio.string_of_bytes b
   in
@@ -291,12 +291,12 @@ let term =
     Arg.(required & opt (some string) None doc)
   in
   let info =
-    Term.info "bytepdf"
+    Cmd.info "bytepdf"
       ~doc:"Merge an OCaml bytecode and a PDF into a file that is both."
   in
   let t =
     Term.(const smash $ pdf $ bytecode $ output)
   in
-  (t, info)
+  Cmd.v info t
 
-let () = Cmdliner.Term.(exit @@ eval term)
+let () = exit @@ Cmdliner.Cmd.eval term

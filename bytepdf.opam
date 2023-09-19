@@ -12,9 +12,8 @@ depends: [
   "dune" {build}
   "bos"
   "cmdliner"
-  "obytelib" {>= "1.4" & < "1.6"}
-  ("camlpdf" {< "2.4"} & "ocaml" {< "4.08"}) |
-  ("camlpdf" {<= "2.5"} & "ocaml" {>= "4.08"})
+  "obytelib" {>= "1.6"}
+  "camlpdf" {>= "2.6"}
 ]
 available: ocaml-version >= "4.03"
 build: [
