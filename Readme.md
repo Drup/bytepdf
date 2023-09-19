@@ -3,7 +3,7 @@
 The `bytepdf` tool allows you to take a PDF `foo.pdf` and an OCaml bytecode `foo.byte` and merges them into a file that is both a valid PDF and a valid bytecode.
 
 ```
-bytepdf --ml foo.byte --pdf foo.pdf -o bar.pdf
+bytepdf --bc foo.byte --pdf foo.pdf -o bar.pdf
 ```
 
 The resulting file can both be read as a pdf and executed by the ocaml interpreter:
@@ -22,3 +22,5 @@ have been statically linked with C code.
 ```
 opam install bytepdf
 ```
+
+Dev version has been tested with up to OCaml 4.10
