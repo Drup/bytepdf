@@ -8,10 +8,13 @@ bug-reports: "https://github.com/Drup/bytepdf/issues"
 dev-repo: "git+https://github.com/Drup/bytepdf.git"
 
 depends: [
+  "ocaml" {>= "4.03"}
   "dune" {build}
+  "bos"
   "cmdliner"
-  "obytelib" { >= "1.4" }
-  "camlpdf"
+  "obytelib" {>= "1.4" & < "1.6"}
+  ("camlpdf" {< "2.4"} & "ocaml" {< "4.08"}) |
+  ("camlpdf" {<= "2.5"} & "ocaml" {>= "4.08"})
 ]
 available: ocaml-version >= "4.03"
 build: [
